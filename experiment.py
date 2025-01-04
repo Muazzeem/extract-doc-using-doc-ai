@@ -1,3 +1,16 @@
+"""
+Document AI Processing Script
+
+This script processes PDF documents using Google Cloud's Document AI service to extract
+and classify information, particularly focusing on service IDs. It includes functionality
+to highlight extracted service IDs in the original PDF document.
+
+Dependencies:
+    - google-cloud-documentai
+    - PyMuPDF (fitz)
+    - google-api-core
+"""
+
 import logging
 from google.api_core.client_options import ClientOptions
 from google.api_core.exceptions import GoogleAPIError
@@ -10,8 +23,8 @@ from create_border_box import highlight_text
 logging.basicConfig(level=logging.INFO)
 
 # Constants
-LOCATION = "us"
-MIME_TYPE = "application/pdf"
+LOCATION = "us"  # Google Cloud region
+MIME_TYPE = "application/pdf"  # Document type being processed
 DOCUMENTATION_CLASSIFIER_PROCESSOR_NAME = (
     "your-project-id/locations/us/processors/your-processor-id"
     "/processorVersions/your-processor-version"
@@ -33,6 +46,9 @@ def process_document(content: bytes, processor_name: str, field_mask: str) -> Do
 
     Returns:
         The processed document.
+
+    Raises:
+        GoogleAPIError: If there's an error processing the document.
     """
     try:
         request = documentai.ProcessRequest(
@@ -53,7 +69,7 @@ def get_document_type(file_path: str) -> Document:
         file_path: The name of the file in the bucket.
 
     Returns:
-        An error message if the classification fails.
+        Document: The processed document with classification information.
     """
     content = open(file_path, "rb").read()
     result = process_document(
@@ -64,6 +80,14 @@ def get_document_type(file_path: str) -> Document:
 
 
 def extract_entity_from_doc(result: Document):
+    """Extracts service IDs from a processed Document AI document.
+
+    Args:
+        result: The processed Document AI document.
+
+    Returns:
+        list: A list of extracted service IDs.
+    """
     service_ids = []
     for p in result.entities:
         if p.type_ == "service_ids":
@@ -72,6 +96,7 @@ def extract_entity_from_doc(result: Document):
 
 
 if __name__ == "__main__":
+    # Example usage of the document processing pipeline
     pdf_path = "5GSFSSCBM_2022.07.01.pdf"
     doc = get_document_type(pdf_path)
     ids = extract_entity_from_doc(doc)
